@@ -1,0 +1,49 @@
+{
+  "name": "valera",
+  "version": "0.0.0",
+  "description": "Very smart logger",
+  "main": "index.js",
+  "typings": "index.d.ts",
+  "scripts": {
+    "test": "npm run rebuild && cp -r dist node_modules/valera && jest --detectOpenHandles --config test/jest.json",
+    "build": "npm run clean && tsc --diagnostics && node ./copy-package.js && cp -r dist node_modules/valera",
+    "clean": "rimraf dist node_modules/valera",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\""
+  },
+  "dependencies": {
+    "chalk": "^3.0.0",
+    "cluster": "^0.7.7",
+    "fs": "0.0.1-security",
+    "moment": "^2.24.0",
+    "util": "^0.12.1"
+  },
+  "devDependencies": {
+    "@types/node": "^12.12.14",
+    "jest": "^24.9.0",
+    "rimraf": "^3.0.0",
+    "ts-jest": "^24.2.0",
+    "ts-node": "^8.5.4",
+    "tslint": "^5.20.1",
+    "typescript": "^3.7.3"
+  },
+  "keywords": [
+    "valera",
+    "very",
+    "smart",
+    "logger"
+  ],
+  "author": {
+    "name": "Shamil Sultanov",
+    "email": "shamil.amirovich@gmail.com",
+    "url": "https://aristocr2t.ru/"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Aristocr2t/valera.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Aristocr2t/valera/issues"
+  },
+  "homepage": "https://github.com/Aristocr2t/valera#readme"
+}
