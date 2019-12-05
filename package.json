@@ -40,10 +40,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Aristocr2t/valera.git"
+    "url": "git+https://github.com/aristocr2t/valera.git"
   },
   "bugs": {
-    "url": "https://github.com/Aristocr2t/valera/issues"
+    "url": "https://github.com/aristocr2t/valera/issues"
   },
-  "homepage": "https://github.com/Aristocr2t/valera#readme"
+  "homepage": "https://github.com/aristocr2t/valera#readme"
 }
