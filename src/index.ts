@@ -124,22 +124,28 @@ export default class Valera {
         return process.stderr;
       },
       file(this: ValeraOptions) {
+        if (this.openedStreams.file) return this.openedStreams.file;
         const logsPath = pathResolve(this.rootPath, 'logs');
         if (!existsSync(logsPath)) mkdirSync(logsPath, { recursive: true });
         const logPath = pathResolve(logsPath, 'all.log');
         if (existsSync(logPath)) {
           const stat = statSync(logPath);
-          renameSync(logPath, pathResolve(dirname(logPath), 'all_' + moment(stat.birthtime).format('YYYYMMDDHHmmss') + '.log'));
+          if (stat.size) {
+            renameSync(logPath, pathResolve(dirname(logPath), 'all_' + moment(stat.birthtime).format('YYYYMMDDHHmmss') + '.log'));
+          }
         }
         return createWriteStream(logPath);
       },
       file_error(this: ValeraOptions) {
+        if (this.openedStreams.file_error) return this.openedStreams.file_error;
         const logsPath = pathResolve(this.rootPath, 'logs');
         if (!existsSync(logsPath)) mkdirSync(logsPath, { recursive: true });
         const logPath = pathResolve(logsPath, 'error.log');
         if (existsSync(logPath)) {
           const stat = statSync(logPath);
-          renameSync(logPath, pathResolve(dirname(logPath), 'error_' + moment(stat.birthtime).format('YYYYMMDDHHmmss') + '.log'));
+          if (stat.size) {
+            renameSync(logPath, pathResolve(dirname(logPath), 'error_' + moment(stat.birthtime).format('YYYYMMDDHHmmss') + '.log'));
+          }
         }
         return createWriteStream(logPath);
       },

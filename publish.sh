@@ -6,9 +6,8 @@ if [ ! -d node_modules ]; then
   npm install
 fi
 
-npm run rebuild
+npm run build
 
-node copy-package.js
 cp LICENSE dist/LICENSE
 cp README.md dist/README.md
 
