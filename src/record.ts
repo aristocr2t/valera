@@ -2,16 +2,16 @@ import { inspect } from 'util';
 
 import { Caller } from './caller';
 
-export type Meta = { [key: string]: any };
+export type Metadata = { [key: string]: any };
 
 export type Level = 'debug' | 'info' | 'warn' | 'error' | 'critical' | 'verbose' | 'trace';
 
 export interface Message {
-  name: string;
-  level: Level;
   date: string;
+  level: Level;
+  name: string;
   file: string;
-  meta: Meta;
+  metadata: Metadata;
   args: any[];
 }
 
@@ -24,24 +24,18 @@ export class Record {
   static separator: string = '<-|->';
   static lineLength: number = 0;
 
-  name: string | undefined;
-  formats: string[];
-  pipes: Pipes;
-  level: Level;
-  date: number;
-  args: any[];
-  caller: Caller;
-  meta: Meta;
+  readonly caller: Caller;
 
-  constructor(name: string | undefined, formats: string[], pipes: Pipes, meta: Meta, level: Level, args: any[]) {
-    this.name = name;
-    this.formats = formats;
-    this.pipes = pipes;
-    this.level = level;
-    this.meta = meta;
-    this.date = Date.now();
+  constructor(
+    public readonly name: string | undefined,
+    public readonly formats: string[],
+    public readonly pipes: Pipes,
+    public readonly metadata: Metadata,
+    public readonly level: Level,
+    public readonly args: any[],
+    public readonly date: number = Date.now(),
+  ) {
     this.caller = Caller.get(Record.fromFileName);
-    this.args = args;
   }
 
   messages(): string[] {
@@ -86,11 +80,11 @@ export class Record {
     const { fileName, line, column } = this.caller;
     return {
       date: new Date(this.date).toISOString(),
-      level: this.level,
       name: this.name,
-      file: `${fileName}:${line}:${column}`,
-      meta: this.meta || {},
+      metadata: this.metadata || {},
+      level: this.level,
       args: this.args || [],
+      file: `${fileName}:${line}:${column}`,
     };
   }
 }
