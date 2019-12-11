@@ -1,6 +1,6 @@
 {
   "name": "valera",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Very smart logger",
   "main": "index.js",
   "typings": "index.d.ts",
