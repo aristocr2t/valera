@@ -3,33 +3,15 @@ import { Level, Metadata, Pipes, Record } from './record';
 export * from './record';
 export * from './caller';
 
-declare global {
-  interface Console {
-    logger: Valera;
-    meta(metadata: Metadata): Valera;
-    setId(name: string): Valera;
-  }
-}
-
-export interface ValeraOptions {
-  name?: string;
-  metadata?: Metadata;
-  formats?: string[];
-  pipes?: Pipes;
-  handler?(this: ValeraOptions, record: Record): void;
-}
-
 export const $metadata = Symbol('metadata');
 
 Record.fromFileName = __filename;
 
-export type ValeraInstance = Valera | ((new () => Valera) & ValeraOptions);
-
 export default class Valera {
   static readonly CONSOLE_METHODS_KEYS: Array<keyof Console> = ['log', 'info', 'error', 'dir', 'warn', 'debug', 'trace'];
   static readonly CONSOLE_METHODS: { [methodName: string]: (...args: any[]) => void } = {};
-  // @ts-ignore
-  static name: string;
+
+  static logname: string = null;
   static readonly metadata: Metadata = {};
   static readonly pipes: Pipes = {};
   static readonly formats: string[] = [];
@@ -37,20 +19,20 @@ export default class Valera {
 
   private static handle(instance: ValeraInstance, level: Level, args: any[]): void {
     const metadata = this.getMetadata(instance);
-    const { name, formats, pipes, handler } = instance;
+    const { logname, formats, pipes, handler } = instance;
     Record.lineLength = process.stdout.columns;
-    const record: Record = new Record(instance.name, formats, pipes, metadata, level, args);
-    handler.call({ name, formats, pipes, metadata }, record);
+    const record: Record = new Record(logname, formats, pipes, metadata, level, args);
+    handler.call({ logname, formats, pipes, metadata }, record);
   }
 
   private static getMetadata(instance?: ValeraInstance): Metadata {
-    if (!instance || this === instance) return Object.assign({}, this.metadata);
+    if (!instance || instance === (this as any)) return Object.assign({}, this.metadata);
     return Object.assign({}, this.metadata, instance.metadata, instance[$metadata]);
   }
 
   static configure(options: ValeraOptions): void {
     if (typeof options === 'object' && options !== null) {
-      if (options.name) Object.defineProperty(Valera, 'name', { value: options.name, writable: false });
+      if (options.name) Valera.logname = options.name;
       if (Array.isArray(options.formats)) Valera.formats.splice(0, Valera.formats.length, ...options.formats);
       if (options.pipes && typeof options.pipes === 'object') Object.assign(Valera.pipes, options.pipes);
       if (options.metadata && typeof options.metadata === 'object') Object.assign(Valera.metadata, options.metadata);
@@ -58,13 +40,12 @@ export default class Valera {
     }
   }
 
-  static overrideConsole(options?: ValeraOptions): void {
-    const logger = new Valera(options);
-    Object.defineProperty(console, 'logger', { value: logger, writable: false });
+  static overrideConsole(): void {
+    Object.defineProperty(console, 'logger', { value: Valera, writable: false });
     for (const m of this.CONSOLE_METHODS_KEYS) {
       // tslint:disable-next-line: only-arrow-functions
       console[m] = function() {
-        return logger[m].apply(logger, arguments);
+        return Valera[m].apply(Valera, arguments);
       };
     }
     // tslint:disable-next-line: only-arrow-functions
@@ -72,20 +53,19 @@ export default class Valera {
       return console.logger.meta(metadata);
     };
     // tslint:disable-next-line: only-arrow-functions
-    console.setId = function(name: string): Valera {
-      return console.logger.setId(name);
+    console.name = function(name: string): Valera {
+      return console.logger.name(name);
     };
 
     process.on('uncaughtException', err => {
-      logger.critical(err);
+      Valera.critical(err);
       process.exit(0);
     });
   }
 
-  static setId(name: string): Valera {
-    const logger = new Valera();
-    logger.name = name;
-    return logger;
+  // @ts-ignore
+  static name(name: string): Valera {
+    return new Valera({ name });
   }
 
   static meta(metadata: Metadata): Valera {
@@ -126,7 +106,7 @@ export default class Valera {
     this.handle(this, 'verbose', args);
   }
 
-  name: string;
+  readonly logname: string;
   readonly [$metadata]: Metadata = {};
   readonly metadata: Metadata = {};
   readonly pipes: Pipes = {};
@@ -135,8 +115,8 @@ export default class Valera {
 
   constructor(options?: ValeraOptions) {
     if (typeof options === 'object' && options !== null) {
-      if (options.name) this.name = options.name;
-      else this.name = Valera.name;
+      if (options.name) this.logname = options.name;
+      else this.logname = Valera.logname;
       if (Array.isArray(options.formats)) this.formats.splice(0, this.formats.length, ...options.formats);
       else this.formats.splice(0, this.formats.length, ...Valera.formats);
       if (options.pipes && typeof options.pipes === 'object') Object.assign(this.pipes, options.pipes);
@@ -146,7 +126,7 @@ export default class Valera {
       if (typeof options.handler === 'function') this.handler = options.handler;
       else this.handler = Valera.handler;
     } else {
-      this.name = Valera.name;
+      this.logname = Valera.logname;
       this.formats.splice(0, this.formats.length, ...Valera.formats);
       Object.assign(this.pipes, Valera.pipes);
       Object.assign(this.metadata, Valera.metadata);
@@ -154,9 +134,9 @@ export default class Valera {
     }
   }
 
-  setId(name: string): Valera {
+  name(name: string): Valera {
     const logger = this.clone();
-    logger.name = name;
+    Object.defineProperty(logger, 'logname', { value: name, writable: false });
     return logger;
   }
 
@@ -168,7 +148,7 @@ export default class Valera {
 
   clone(): Valera {
     const logger = new Valera({
-      name: this.name,
+      name: this.logname,
       metadata: this.metadata,
       formats: this.formats,
       pipes: this.pipes,
@@ -210,7 +190,25 @@ export default class Valera {
     Valera.handle(this, 'verbose', args);
   }
 }
-Object.defineProperty(Valera, 'name', { value: null, writable: false });
+
+declare global {
+  interface Console {
+    logger: typeof Valera;
+    meta(metadata: Metadata): Valera;
+    name(name: string): Valera;
+  }
+}
+
+export type ValeraInstance = Valera | typeof Valera;
+
+export interface ValeraOptions {
+  name?: string;
+  metadata?: Metadata;
+  formats?: string[];
+  pipes?: Pipes;
+  handler?(this: ValeraOptions, record: Record): void;
+}
+
 for (const m of Valera.CONSOLE_METHODS_KEYS) {
   Object.defineProperty(Valera.CONSOLE_METHODS, m, { value: console[m], writable: false });
 }

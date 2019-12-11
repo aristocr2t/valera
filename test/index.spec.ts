@@ -4,7 +4,7 @@ import { inspect } from 'util';
 describe('index', () => {
   let record: Record;
   it('should be configure default Valera options', done => {
-    expect(Valera.name).toBeNull();
+    expect(Valera.logname).toBeNull();
     Valera.configure({
       name: 'app',
       metadata: { appId: 'test' },
@@ -31,7 +31,7 @@ describe('index', () => {
         record = r;
       },
     });
-    expect(Valera.name).toBe('app');
+    expect(Valera.logname).toBe('app');
     done();
   });
 
@@ -42,7 +42,7 @@ describe('index', () => {
 
   it('should be create messages by formats', done => {
     console
-      .setId('test')
+      .name('test')
       .meta({ test: 1 })
       .log('test message');
     expect(record.name).toBe('test');
