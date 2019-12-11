@@ -73,56 +73,60 @@ export default class Valera {
       if (!Array.isArray(options.formats)) options.formats = Valera.options.formats;
       if (!options.pipes || typeof options.pipes !== 'object') options.pipes = Valera.options.pipes;
       if (!options.meta || typeof options.meta !== 'object') options.meta = Valera.options.meta;
-      else options.meta = Object.assign({}, Valera.options.meta, options.meta);
       if (typeof options.handler !== 'function') options.handler = Valera.options.handler;
     }
   }
 
   log(message?: any, ...optionalParams: any[]): void {
-    this.handle(Object.assign({}, this.options.meta, this[$meta] || {}), 'debug', message, ...optionalParams);
+    this.handle('debug', message, ...optionalParams);
   }
 
   debug(message?: any, ...optionalParams: any[]): void {
-    this.handle(Object.assign({}, this.options.meta, this[$meta] || {}), 'debug', message, ...optionalParams);
+    this.handle('debug', message, ...optionalParams);
   }
 
   info(message?: any, ...optionalParams: any[]): void {
-    this.handle(Object.assign({}, this.options.meta, this[$meta] || {}), 'info', message, ...optionalParams);
+    this.handle('info', message, ...optionalParams);
   }
 
   warn(message?: any, ...optionalParams: any[]): void {
-    this.handle(Object.assign({}, this.options.meta, this[$meta] || {}), 'warn', message, ...optionalParams);
+    this.handle('warn', message, ...optionalParams);
   }
 
   trace(message?: any, ...optionalParams: any[]): void {
-    this.handle(Object.assign({}, this.options.meta, this[$meta] || {}), 'trace', message, ...optionalParams);
+    this.handle('trace', message, ...optionalParams);
   }
 
   error(message?: any, ...optionalParams: any[]): void {
-    this.handle(Object.assign({}, this.options.meta, this[$meta] || {}), 'error', message, ...optionalParams);
+    this.handle('error', message, ...optionalParams);
   }
 
   critical(message?: any, ...optionalParams: any[]): void {
-    this.handle(Object.assign({}, this.options.meta, this[$meta] || {}), 'critical', message, ...optionalParams);
+    this.handle('critical', message, ...optionalParams);
   }
 
   dir(value?: any, ...optionalParams: any[]): void {
-    this.handle(Object.assign({}, this.options.meta, this[$meta] || {}), 'verbose', value, ...optionalParams);
+    this.handle('verbose', value, ...optionalParams);
   }
 
   meta(meta: Meta): Valera {
     const logger = this.clone();
-    logger[$meta] = meta;
+    logger[$meta] = Object.assign({}, logger[$meta] || {}, meta || {});
     return logger;
   }
 
   clone(): Valera {
     const logger = new Valera(this.options);
-    logger[$meta] = Object.assign(this.options.meta, this[$meta] || {});
+    logger[$meta] = Object.assign({}, this[$meta] || {});
     return logger;
   }
 
-  private handle(meta: Meta, level: Level, ...args: any[]): void {
+  private getMeta(): Meta {
+    return Object.assign({}, Valera.options.meta, this.options.meta, this[$meta] || {});
+  }
+
+  private handle(level: Level, ...args: any[]): void {
+    const meta = this.getMeta();
     const { name, formats, pipes, handler } = this.options;
     Record.lineLength = process.stdout.columns;
     const record: Record = new Record(name, formats, pipes, meta, level, args);
