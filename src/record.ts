@@ -61,14 +61,23 @@ export class Record {
           const fn = new Function('with(this){return(' + q + ');}') as (this: Record) => string;
           return fn.call(this);
         });
-        if (Record.lineLength > 0 && Record.separator && message.includes(Record.separator)) {
-          const parts = message.split(Record.separator);
-          const cleanMessage = message.replace(Record.ansiColorsReplaceMask, '');
-          const seps = parts.length - 1;
-          const sl = Record.lineLength - (cleanMessage.length - seps * Record.separator.length);
-          const sln = Math.floor(sl / seps);
-          if (sl % seps !== 0) for (let i = 0; i < parts.length; i += seps) parts[i] += ' ';
-          return parts.join(sl > 0 ? ' '.repeat(sln) : '\n');
+        if (Record.separator && message.includes(Record.separator)) {
+          if (Record.lineLength > 0) {
+            const parts = message.split(Record.separator);
+            if (message.includes('\n')) {
+              return printWithN(parts);
+            } else {
+              const cleanMessage = message.replace(Record.ansiColorsReplaceMask, '');
+              const seps = parts.length - 1;
+              const sl = Record.lineLength - ((cleanMessage || '').length - seps * Record.separator.length);
+              if (sl > 0 && sl % seps !== 0) {
+                for (let i = 0, len = parts.length; i < len; i += seps) parts[i] += ' ';
+              }
+              return sl > 0 ? parts.join(' '.repeat(Math.floor(sl / seps))) : printWithN(parts);
+            }
+          } else {
+            return message.split(Record.separator).join('\n');
+          }
         }
         return message;
       });
@@ -87,4 +96,12 @@ export class Record {
       file: `${fileName}:${line}:${column}`,
     };
   }
+}
+
+function printWithN(parts: string[]): string {
+  for (let i = 0, i_next = 1, len = parts.length - 1, sln: number; i < len; i += 2, i_next += 2) {
+    sln = Record.lineLength - parts[i_next].length;
+    parts[i] += sln > 0 ? '\n' + ' '.repeat(Record.lineLength - parts[i_next].length) : '\n';
+  }
+  return parts.join('');
 }
