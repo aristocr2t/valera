@@ -2,9 +2,9 @@ import Valera, { Caller, Record } from 'valera';
 import { inspect } from 'util';
 
 describe('index', () => {
-  let record: Record;
+  let record!: Record;
   it('should be configure default Valera options', done => {
-    expect(Valera.logname).toBeNull();
+    expect(Valera.logname).toBeUndefined();
     Valera.configure({
       name: 'app',
       metadata: { appId: 'test' },
@@ -42,8 +42,8 @@ describe('index', () => {
 
   it('should be create messages by formats', done => {
     console
-      .name('test')
       .meta({ test: 1 })
+      .name('test')
       .log('test message');
     expect(record.name).toBe('test');
     expect(record.metadata.test).toBe(1);
