@@ -1,13 +1,16 @@
 {
   "name": "valera",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Very smart logger",
   "main": "index.js",
   "typings": "index.d.ts",
   "scripts": {
-    "test": "npm run build && jest --detectOpenHandles --config test/jest.json",
-    "build": "npm run clean && tsc --diagnostics && node copy-package.js && cp -r dist node_modules/valera",
-    "clean": "rimraf dist node_modules/valera",
+    "prebuild": "rimraf dist node_modules/valera",
+    "build": "tsc --diagnostics && cp -r dist node_modules/valera",
+		"prepublishOnly": "npm run build && node prepublish.js",
+		"release": "RELEASE_MODE=true npm run prepublishOnly && npm publish dist/",
+    "pretest": "npm run build",
+    "test": "jest --detectOpenHandles --config test/jest.json",
     "fix": "eslint \"src/**/*.ts\" --fix --ext .ts",
     "lint": "eslint \"src/**/*.ts\" -f codeframe"
   },
@@ -27,18 +30,18 @@
     "ts-node": "^8.8.2",
     "typescript": "^3.8.3"
   },
+  "license": "MIT",
+  "author": {
+    "name": "Shamil Sultanov",
+    "email": "shamil.amirovich@gmail.com",
+    "url": "http://sultanov.io"
+  },
   "keywords": [
     "valera",
     "very",
     "smart",
     "logger"
   ],
-  "author": {
-    "name": "Shamil Sultanov",
-    "email": "shamil.amirovich@gmail.com",
-    "url": "http://sultanov.io/"
-  },
-  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aristocr2t/valera.git"
