@@ -3,6 +3,7 @@
 Very smart logger for node.js platform
 
 [![NPM](https://nodei.co/npm/valera.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/valera/)
+
 ![valera npm version](https://img.shields.io/npm/v/valera.svg) ![supported node version for valera](https://img.shields.io/node/v/valera.svg) ![total npm downloads for valera](https://img.shields.io/npm/dt/valera.svg) ![monthly npm downloads for valera](https://img.shields.io/npm/dm/valera.svg) ![npm licence for valera](https://img.shields.io/npm/l/valera.svg)
 
 ## Usage example
