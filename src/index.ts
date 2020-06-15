@@ -13,7 +13,9 @@ export default class Valera {
 	static readonly CONSOLE_METHODS_KEYS: ConsoleOverrideMethods[] = ['log', 'info', 'error', 'dir', 'warn', 'debug', 'trace'];
 	static readonly CONSOLE_METHODS: { [methodName: string]: (...args: any[]) => void } = {};
 
+	static debugMode: boolean = false;
 	static logname?: string | undefined;
+
 	static readonly metadata: Metadata = {};
 	static readonly pipes: Pipes = {};
 	static readonly formats: string[] = [];
@@ -34,28 +36,42 @@ export default class Valera {
 	}
 
 	private static getMetadata(instance?: ValeraInstance): Metadata {
-		if (!instance || instance === (this as any)) {
+		if (!instance || instance === this) {
 			return { ...this.metadata };
 		}
 
 		return {
 			...this.metadata,
 			...instance.metadata,
-			...(instance as any)[$metadata],
+			...(instance as { [$metadata]: Metadata })[$metadata] as Metadata,
 		};
 	}
 
 	static configure(options: ValeraOptions): void {
 		if (typeof options === 'object' && options !== null) {
-			if (options.name) Valera.logname = options.name;
+			if (options.name) {
+				this.logname = options.name;
+			}
 
-			if (Array.isArray(options.formats)) Valera.formats.splice(0, Valera.formats.length, ...options.formats);
+			if (options.debug) {
+				this.debugMode = true;
+			}
 
-			if (options.pipes && typeof options.pipes === 'object') Object.assign(Valera.pipes, options.pipes);
+			if (Array.isArray(options.formats)) {
+				this.formats.splice(0, this.formats.length, ...options.formats);
+			}
 
-			if (options.metadata && typeof options.metadata === 'object') Object.assign(Valera.metadata, options.metadata);
+			if (options.pipes && typeof options.pipes === 'object') {
+				Object.assign(this.pipes, options.pipes);
+			}
 
-			if (typeof options.handler === 'function') Valera.handler = options.handler;
+			if (options.metadata && typeof options.metadata === 'object') {
+				Object.assign(this.metadata, options.metadata);
+			}
+
+			if (typeof options.handler === 'function') {
+				this.handler = options.handler;
+			}
 		}
 	}
 
@@ -95,7 +111,9 @@ export default class Valera {
 	}
 
 	static debug(...args: any[]): void {
-		this.handle(this, 'debug', args);
+		if (this.debugMode) {
+			this.handle(this, 'debug', args);
+		}
 	}
 
 	static info(...args: any[]): void {
@@ -127,6 +145,7 @@ export default class Valera {
 	readonly metadata: Metadata = {};
 	readonly pipes: Pipes = {};
 	readonly formats: string[] = [];
+	readonly debugMode: boolean = false;
 
 	constructor(options?: ValeraOptions) {
 		if (typeof options === 'object' && options !== null) {
@@ -135,6 +154,8 @@ export default class Valera {
 			} else {
 				this.logname = Valera.logname;
 			}
+
+			this.debugMode = typeof options.debug === 'boolean' ? options.debug : Valera.debugMode;
 
 			if (Array.isArray(options.formats)) {
 				this.formats.splice(0, this.formats.length, ...options.formats);
@@ -173,7 +194,7 @@ export default class Valera {
 	name(name: string): Valera {
 		const logger = this.clone();
 		Object.defineProperty(logger, 'logname', {
-			value: name,
+			value: logger.logname && name ? `${logger.logname}.${name}` : (name || logger.logname),
 			writable: false,
 		});
 
@@ -203,7 +224,9 @@ export default class Valera {
 	}
 
 	debug(...args: any[]): void {
-		Valera.handle(this, 'debug', args);
+		if (Valera.debugMode) {
+			Valera.handle(this, 'debug', args);
+		}
 	}
 
 	info(...args: any[]): void {
@@ -247,6 +270,7 @@ export interface ValeraOptions {
 	formats?: string[];
 	pipes?: Pipes;
 	handler?(this: ValeraOptions, record: Record): void;
+	debug?: boolean;
 }
 
 for (const m of Valera.CONSOLE_METHODS_KEYS) {
