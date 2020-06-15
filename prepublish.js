@@ -1,4 +1,4 @@
-const { writeFileSync, readFileSync, copyFileSync } = require('fs');
+const { writeFileSync, readFileSync, copyFileSync, existsSync, unlinkSync } = require('fs');
 
 const packageJson = JSON.parse(readFileSync('package.json').toString());
 
