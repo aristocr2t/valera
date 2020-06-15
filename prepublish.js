@@ -11,3 +11,7 @@ const copyingFiles = ['LICENSE', 'README.md'];
 for (const cf of copyingFiles) {
 	copyFileSync(cf, `dist/${cf}`);
 }
+
+if (existsSync('dist/tsconfig.tsbuildinfo')) {
+	unlinkSync('dist/tsconfig.tsbuildinfo');
+}

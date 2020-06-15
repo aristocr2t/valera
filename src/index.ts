@@ -13,7 +13,7 @@ export default class Valera {
 	static readonly CONSOLE_METHODS_KEYS: ConsoleOverrideMethods[] = ['log', 'info', 'error', 'dir', 'warn', 'debug', 'trace'];
 	static readonly CONSOLE_METHODS: { [methodName: string]: (...args: any[]) => void } = {};
 
-	static debugMode: boolean = false;
+	static debugMode: boolean = true;
 	static logname?: string | undefined;
 
 	static readonly metadata: Metadata = {};
@@ -145,7 +145,7 @@ export default class Valera {
 	readonly metadata: Metadata = {};
 	readonly pipes: Pipes = {};
 	readonly formats: string[] = [];
-	readonly debugMode: boolean = false;
+	readonly debugMode: boolean = true;
 
 	constructor(options?: ValeraOptions) {
 		if (typeof options === 'object' && options !== null) {
