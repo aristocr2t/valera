@@ -1,6 +1,6 @@
 {
   "name": "valera",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "Very smart logger",
   "main": "index.js",
   "typings": "index.d.ts",
@@ -29,6 +29,9 @@
     "ts-jest": "^26.1.0",
     "ts-node": "^8.10.2",
     "typescript": "^3.9.5"
+  },
+  "engines": {
+    "node": ">=8.0.0"
   },
   "license": "MIT",
   "author": {
