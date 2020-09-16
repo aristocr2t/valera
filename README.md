@@ -6,6 +6,16 @@ Very smart logger for node.js platform
 
 ![valera npm version](https://img.shields.io/npm/v/valera.svg) ![supported node version for valera](https://img.shields.io/node/v/valera.svg) ![total npm downloads for valera](https://img.shields.io/npm/dt/valera.svg) ![monthly npm downloads for valera](https://img.shields.io/npm/dm/valera.svg) ![npm licence for valera](https://img.shields.io/npm/l/valera.svg)
 
+## Upgrade to v4.0.0
+
+Valera v4 is now even faster and more convenient! No vulnerabilities and no dependencies!
+
+1. Updated pipe resolving method;
+2. Optimized code;
+2. Removed implied eval function;
+3. Removed unused features (inspect).
+4. Removed all dependencies!
+
 ## Usage example
 
 ### Set global configuration
@@ -19,11 +29,11 @@ const errorLogFileStream = createWriteStream(errorLogFile, { flags: 'a' });
 Valera.configure({
   name: 'app',
   metadata: { appId: process.pid + '.app' },
-  formats: [
-    `{% pipes.date(date) %} {% level.toUpperCase() %}{% pipes.name(name) %} {% pipes.message(args) %}<-|->{% pipes.file(caller) %}`,
-    'json',
-  ],
+  formats: [`{{ date | date }} {{ level | uppercase }}{{ name | name }} {{ args | message }}<-|->{{ caller | file }}`, 'json'],
   pipes: {
+    uppercase(text: string): string {
+      return text.toUpperCase();
+    },
     date(date: number): string {
       return new Date(date).toISOString();
     },
@@ -59,17 +69,24 @@ Valera.overrideConsole();
 console.warn('starting in production mode');
 
 // custom format output:
-// 2019-12-10T19:52:41.393Z WARN <app> starting in production mode                                        /path/to/project/index.ts:45:17
+// 2020-09-16T08:17:46.869Z WARN <app> starting in production mode                                        /path/to/project/index.ts:45:17
 // yes, this is flexible separator "<-|->"
 // JSON output:
-// {"date":"2019-12-10T19:52:41.393Z","level":"warn","name":"app","file":"/path/to/project/index.ts:45:17","meta":{"appId":"12345.app"},"args":["starting in production mode"]}
+// {"args":["starting in production mode"],"caller":{"fileName":"/path/to/project/index.ts","methodName":"","functionName":"","typeName":"Object","line":45,"column":17,"evalOrigin":"","isToplevel":false,"isEval":false,"isNative":false,"isConstructor":false},"date":1600244266869,"level":"debug","metadata":{"appId":"12345.app"},"name":"app"}
 ```
 
 ### Changing separator mask
 
 ```typescript
 Record.separator = '<=!=>';
-Valera.configure({ formats: [`{% date %}<=!=>{% args.join(' ') %}`] });
+Valera.configure({
+  formats: [`{{ date }}<=!=>{{ args | message }}`],
+  pipes: {
+    message(args: any[]): string {
+      return args.join(' ');
+    },
+  },
+});
 ```
 
 ### Providing metadata to message
@@ -78,7 +95,7 @@ Valera.configure({ formats: [`{% date %}<=!=>{% args.join(' ') %}`] });
 // metadata of the current message merges with the global metadata
 console.meta({ isMaster: cluster.isMaster }).warn('starting in production mode');
 // JSON output:
-// {"date":"2019-12-10T19:52:41.393Z","level":"warn","name":"app","file":"/path/to/project/index.ts:45:17","meta":{"appId":"12345.app","isMaster":true},"args":["starting in production mode"]}
+// {"args":["starting in production mode"],"caller":{"fileName":"/path/to/project/index.ts","methodName":"","functionName":"","typeName":"Object","line":45,"column":17,"evalOrigin":"","isToplevel":false,"isEval":false,"isNative":false,"isConstructor":false},"date":1600244266869,"level":"debug","metadata":{"appId":"12345.app","isMaster":true},"name":"app"}
 ```
 
 ### Creating new logger instance

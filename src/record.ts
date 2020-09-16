@@ -1,5 +1,3 @@
-import { inspect } from 'util';
-
 import { Caller } from './caller';
 
 export interface Metadata {
@@ -9,12 +7,12 @@ export interface Metadata {
 export type Level = 'debug' | 'info' | 'warn' | 'error' | 'critical' | 'verbose' | 'trace';
 
 export interface Message {
-	date: string;
-	level: Level;
-	name: string | undefined;
-	file: string;
-	metadata: Metadata;
 	args: any[];
+	caller: Caller;
+	date: number;
+	level: Level;
+	metadata: Metadata;
+	name: string | undefined;
 }
 
 export interface Pipes {
@@ -22,7 +20,8 @@ export interface Pipes {
 }
 
 export class Record {
-	static formatReplaceMask = /\{%(?:\s*)(.*?)(?:\s*)%\}/g;
+	static formatReplaceMask = /\{\{\s*([a-zA-Z_$][0-9a-zA-Z_$]+)(?:\s*\|\s*([a-zA-Z_$][0-9a-zA-Z_$]+))?\s*\}\}/g;
+	// eslint-disable-next-line no-control-regex
 	static ansiColorsReplaceMask = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g;
 	static fromFileName: string = __filename;
 	static separator: string = '<-|->';
@@ -31,7 +30,7 @@ export class Record {
 	static printWithN(parts: string[]): string {
 		for (let i = 0, iNext = 1, len = parts.length - 1, sln: number; i < len; i += 2, iNext += 2) {
 			sln = this.lineLength - parts[iNext].length;
-			parts[i] += sln > 0 ? '\n' + ' '.repeat(this.lineLength - parts[iNext].length) : '\n';
+			parts[i] += sln > 0 ? `\n${' '.repeat(this.lineLength - parts[iNext].length)}` : '\n';
 		}
 
 		return parts.join('');
@@ -52,70 +51,79 @@ export class Record {
 	}
 
 	messages(): string[] {
-		if (Array.isArray(this.formats)) {
-			return this.formats.map(f => {
-				if (f === 'json') {
-					const cache: any[] = [];
-					const out = JSON.stringify(this.toMessage(), (key, value) => {
-						if (typeof value === 'object' && value !== null) {
-							if (cache.includes(value)) {
-								return `[circular ${key}]`;
-							}
-
-							cache.push(value);
-						}
-
-						return value;
-					});
-
-					return out;
-				} else if (f === 'inspect') {
-					return inspect(this.toMessage(), false, null, false);
-				}
-
-				// eslint-disable-next-line no-new-func
-				const handler = new Function(`with(this){return("${f.replace(Record.formatReplaceMask, '"+($1)+"')}");}`) as (this: Record) => string;
-				const message = handler.call(this);
-
-				if (Record.separator && message.includes(Record.separator)) {
-					if (Record.lineLength > 0) {
-						const parts = message.split(Record.separator);
-
-						if (message.includes('\n')) {
-							return Record.printWithN(parts);
-						} else {
-							const cleanMessage = message.replace(Record.ansiColorsReplaceMask, '');
-							const seps = parts.length - 1;
-							const sl = Record.lineLength - ((cleanMessage || '').length - seps * Record.separator.length);
-
-							if (sl > 0 && sl % seps !== 0) {
-								for (let i = 0, len = parts.length; i < len; i += seps) parts[i] += ' ';
-							}
-
-							return sl > 0 ? parts.join(' '.repeat(Math.floor(sl / seps))) : Record.printWithN(parts);
-						}
-					} else {
-						return message.split(Record.separator).join('\n');
-					}
-				}
-
-				return message;
-			});
+		if (!Array.isArray(this.formats)) {
+			return [];
 		}
 
-		return [];
+		return this.formats.map((f) => {
+			if (f === 'json') {
+				const cache: any[] = [];
+				const jsonMessage = this.toMessage();
+				const out = JSON.stringify(jsonMessage, (key, value) => {
+					if (typeof value === 'object' && value) {
+						if (cache.includes(value)) {
+							return `[circular ${key}]`;
+						}
+
+						cache.push(value);
+					}
+
+					return value;
+				});
+
+				return out;
+			}
+
+			const stringMessage = f.replace(Record.formatReplaceMask, (_: string, propName: string, pipeName: string) => {
+				const prop = (this as {[ key: string]: any })[propName];
+
+				if (pipeName !== undefined) {
+					const pipe = this.pipes[pipeName];
+
+					if (typeof pipe !== 'function') {
+						throw new TypeError(`Pipe property "${pipeName}" is not a function`);
+					}
+
+					return pipe(prop);
+				}
+
+				return prop;
+			});
+
+			if (Record.separator && stringMessage.includes(Record.separator)) {
+				if (Record.lineLength > 0) {
+					const parts = stringMessage.split(Record.separator);
+
+					if (stringMessage.includes('\n')) {
+						return Record.printWithN(parts);
+					}
+
+					const cleanMessage = stringMessage.replace(Record.ansiColorsReplaceMask, '');
+					const seps = parts.length - 1;
+					const sl = Record.lineLength - ((cleanMessage || '').length - (seps * Record.separator.length));
+
+					if (sl > 0 && sl % seps !== 0) {
+						for (let i = 0, len = parts.length; i < len; i += seps) parts[i] += ' ';
+					}
+
+					return sl > 0 ? parts.join(' '.repeat(Math.floor(sl / seps))) : Record.printWithN(parts);
+				}
+
+				return stringMessage.split(Record.separator).join('\n');
+			}
+
+			return stringMessage;
+		});
 	}
 
 	toMessage(): Message {
-		const { fileName, line, column } = this.caller;
-
 		return {
-			date: new Date(this.date).toISOString(),
-			name: this.name,
-			metadata: this.metadata || {},
-			level: this.level,
 			args: this.args || [],
-			file: `${fileName}:${line}:${column}`,
+			caller: this.caller,
+			date: this.date,
+			level: this.level,
+			metadata: this.metadata || {},
+			name: this.name,
 		};
 	}
 }

@@ -7,10 +7,10 @@ export const $metadata = Symbol('metadata');
 
 Record.fromFileName = __filename;
 
-export type ConsoleOverrideMethods = 'log' | 'info' | 'error' | 'dir' | 'warn' | 'debug' | 'trace';
+export type ConsoleMethods = 'log' | 'info' | 'error' | 'dir' | 'warn' | 'debug' | 'trace';
 
 export default class Valera {
-	static readonly CONSOLE_METHODS_KEYS: ConsoleOverrideMethods[] = ['log', 'info', 'error', 'dir', 'warn', 'debug', 'trace'];
+	static readonly CONSOLE_METHODS_KEYS: ConsoleMethods[] = ['log', 'info', 'error', 'dir', 'warn', 'debug', 'trace'];
 	static readonly CONSOLE_METHODS: { [methodName: string]: (...args: any[]) => void } = {};
 
 	static debugMode: boolean = true;
@@ -89,7 +89,7 @@ export default class Valera {
 
 		console.name = (name: string): Valera => Valera.useName(name);
 
-		process.on('uncaughtException', err => {
+		process.on('uncaughtException', (err) => {
 			Valera.critical(err);
 			process.exit(0);
 		});

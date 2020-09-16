@@ -9,7 +9,7 @@ export class Caller {
 
 		const callSites = Array.from(err.stack ?? []) as unknown as NodeJS.CallSite[];
 
-		for (let i = 1, foundFromFilename: boolean = false; i < callSites.length; i++) {
+		for (let i = 1, foundFromFilename = false; i < callSites.length; i++) {
 			callerfile = callSites[i].getFileName();
 
 			if (!foundFromFilename && callerfile === fromFileName) {
